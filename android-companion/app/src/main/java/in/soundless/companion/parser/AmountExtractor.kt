@@ -1,4 +1,4 @@
-package in.soundless.companion.parser
+package `in`.soundless.companion.parser
 
 import java.util.regex.Pattern
 

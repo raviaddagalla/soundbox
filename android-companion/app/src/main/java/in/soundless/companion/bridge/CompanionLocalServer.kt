@@ -1,10 +1,10 @@
-package in.soundless.companion.bridge
+package `in`.soundless.companion.bridge
 
 import android.os.Build
 import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.JsonObject
-import in.soundless.companion.notification.SanitizedPaymentEvent
+import `in`.soundless.companion.notification.SanitizedPaymentEvent
 import org.java_websocket.WebSocket
 import org.java_websocket.handshake.ClientHandshake
 import org.java_websocket.server.WebSocketServer

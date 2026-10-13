@@ -1,7 +1,7 @@
-package in.soundless.companion.dedup
+package `in`.soundless.companion.dedup
 
-import in.soundless.companion.notification.ParsedNotificationData
-import in.soundless.companion.notification.RawNotification
+import `in`.soundless.companion.notification.ParsedNotificationData
+import `in`.soundless.companion.notification.RawNotification
 import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.abs

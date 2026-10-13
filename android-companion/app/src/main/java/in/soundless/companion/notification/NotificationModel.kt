@@ -1,4 +1,4 @@
-package in.soundless.companion.notification
+package `in`.soundless.companion.notification
 
 enum class EventType {
     INCOMING_PAYMENT,

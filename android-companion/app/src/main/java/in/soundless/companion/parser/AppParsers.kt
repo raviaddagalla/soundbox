@@ -1,8 +1,8 @@
-package in.soundless.companion.parser
+package `in`.soundless.companion.parser
 
-import in.soundless.companion.notification.EventType
-import in.soundless.companion.notification.ParsedNotificationData
-import in.soundless.companion.notification.RawNotification
+import `in`.soundless.companion.notification.EventType
+import `in`.soundless.companion.notification.ParsedNotificationData
+import `in`.soundless.companion.notification.RawNotification
 
 interface AppParser {
     val supportedPackages: List<String>
@@ -112,7 +112,7 @@ class GooglePayParser : AppParser {
             )
         }
 
-        if (lower.contains("payment failed") || lower.contains("could not be completed")) {
+        if (lower.contains("failed") || lower.contains("declined") || lower.contains("could not be completed")) {
             return ParsedNotificationData(
                 isPayment = true,
                 eventType = EventType.FAILED_PAYMENT,

@@ -47,6 +47,7 @@ dependencies {
     implementation("com.google.android.material:material:1.12.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.4")
+    implementation("androidx.webkit:webkit:1.11.0")
 
     // Lightweight embedded WebSocket/HTTP server for local bridge pairing
     implementation("org.java-websocket:Java-WebSocket:1.5.7")

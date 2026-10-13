@@ -112,14 +112,21 @@ export const DiagnosticsView: React.FC = () => {
           </div>
 
           <button
-            onClick={() => setNotificationPermission(!notificationPermissionGranted)}
+            onClick={() => {
+              const bridge = typeof window !== 'undefined' ? (window as unknown as { AndroidBridge?: { openNotificationSettings?: () => void } }).AndroidBridge : undefined;
+              if (bridge && typeof bridge.openNotificationSettings === 'function') {
+                bridge.openNotificationSettings();
+              } else {
+                setNotificationPermission(!notificationPermissionGranted);
+              }
+            }}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
               notificationPermissionGranted
                 ? 'bg-surface-container text-text-secondary hover:bg-slate-200'
                 : 'bg-emerald-primary text-white shadow-sm'
             }`}
           >
-            {notificationPermissionGranted ? 'Revoke Test' : 'Grant Access'}
+            {notificationPermissionGranted ? 'Revoke Test' : 'Open Android Settings'}
           </button>
         </div>
 

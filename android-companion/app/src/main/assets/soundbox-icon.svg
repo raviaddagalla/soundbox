@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" rx="128" fill="#4338CA"/>
+  <rect x="72" y="72" width="368" height="368" rx="80" fill="#3730A3" fill-opacity="0.5"/>
+  <circle cx="256" cy="256" r="140" fill="#4F46E5"/>
+  <!-- Sound Waves & UPI Rupee symbol -->
+  <path d="M210 180H302M210 216H280M210 180C240 180 270 195 270 230C270 265 235 275 210 275L296 340" stroke="#FFFFFF" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Voice Speaker waves -->
+  <path d="M340 210C356 223 366 239 366 256C366 273 356 289 340 302" stroke="#A5B4FC" stroke-width="18" stroke-linecap="round"/>
+  <path d="M375 180C400 202 414 228 414 256C414 284 400 310 375 332" stroke="#C7D2FE" stroke-width="18" stroke-linecap="round"/>
+  <circle cx="140" cy="140" r="16" fill="#10B981"/>
+</svg>

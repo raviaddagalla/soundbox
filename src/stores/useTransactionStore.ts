@@ -13,6 +13,7 @@ interface TransactionStoreState {
 
   loadTransactions: () => Promise<void>;
   addTransaction: (tx: SanitizedTransactionEvent) => Promise<void>;
+  addTransactionsBatch: (txList: SanitizedTransactionEvent[]) => Promise<void>;
   setSelectedCategory: (cat: string) => void;
   setSearchQuery: (q: string) => void;
   setDateFilter: (filter: 'TODAY' | 'YESTERDAY' | 'WEEK' | 'ALL') => void;
@@ -49,11 +50,43 @@ export const useTransactionStore = create<TransactionStoreState>((set, get) => (
   },
 
   addTransaction: async (tx: SanitizedTransactionEvent) => {
-    // Add to state newest first
-    set((state) => ({
-      transactions: [tx, ...state.transactions]
-    }));
-    await soundboxDB.saveTransaction(tx);
+    let isNew = false;
+    set((state) => {
+      const exists = state.transactions.some(
+        t => t.eventId === tx.eventId || (t.referenceId && tx.referenceId && t.referenceId === tx.referenceId)
+      );
+      if (exists) return state;
+      isNew = true;
+      return {
+        transactions: [tx, ...state.transactions]
+      };
+    });
+    if (isNew) {
+      await soundboxDB.saveTransaction(tx);
+    }
+  },
+
+  addTransactionsBatch: async (txList: SanitizedTransactionEvent[]) => {
+    if (!txList || txList.length === 0) return;
+    const toSave: SanitizedTransactionEvent[] = [];
+    set((state) => {
+      const existingIds = new Set(state.transactions.map(t => t.eventId));
+      const existingRefs = new Set(state.transactions.map(t => t.referenceId).filter(Boolean));
+      const newItems = txList.filter(tx => {
+        if (existingIds.has(tx.eventId)) return false;
+        if (tx.referenceId && existingRefs.has(tx.referenceId)) return false;
+        existingIds.add(tx.eventId);
+        if (tx.referenceId) existingRefs.add(tx.referenceId);
+        return true;
+      });
+      toSave.push(...newItems);
+      return {
+        transactions: [...newItems, ...state.transactions]
+      };
+    });
+    for (const item of toSave) {
+      await soundboxDB.saveTransaction(item);
+    }
   },
 
   setSelectedCategory: (cat: string) => set({ selectedCategory: cat }),

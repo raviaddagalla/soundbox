@@ -1,12 +1,12 @@
-package in.soundless.companion.notification
+package `in`.soundless.companion.notification
 
 import android.app.Notification
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
-import in.soundless.companion.SoundlessApp
-import in.soundless.companion.classifier.PaymentClassifier
-import in.soundless.companion.parser.ParserRegistry
+import `in`.soundless.companion.SoundlessApp
+import `in`.soundless.companion.classifier.PaymentClassifier
+import `in`.soundless.companion.parser.ParserRegistry
 import java.util.UUID
 
 class SoundlessNotificationListenerService : NotificationListenerService() {
@@ -99,7 +99,7 @@ class SoundlessNotificationListenerService : NotificationListenerService() {
             if (fp != null) {
                 dedup.record(fp, raw.timestamp)
             }
-            app.ttsManager.announce(parsed.amount, decision.eventType)
+            app?.ttsManager?.announce(parsed.amount, decision.eventType)
         }
 
         // 5. Broadcast to Connected Web Dashboard

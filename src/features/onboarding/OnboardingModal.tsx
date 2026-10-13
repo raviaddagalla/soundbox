@@ -230,9 +230,12 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onClos
               <div className="space-y-2">
                 <button
                   onClick={() => {
-                    // In real Android companion, opens intent Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS
-                    // In web, we simulate verification
-                    setNotificationPermission(true);
+                    const bridge = typeof window !== 'undefined' ? (window as unknown as { AndroidBridge?: { openNotificationSettings?: () => void } }).AndroidBridge : undefined;
+                    if (bridge && typeof bridge.openNotificationSettings === 'function') {
+                      bridge.openNotificationSettings();
+                    } else {
+                      setNotificationPermission(true);
+                    }
                   }}
                   className="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center space-x-2 shadow-sm shadow-indigo-200"
                 >

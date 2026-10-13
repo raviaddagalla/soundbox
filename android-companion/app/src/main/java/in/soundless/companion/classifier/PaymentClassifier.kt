@@ -1,7 +1,7 @@
-package in.soundless.companion.classifier
+package `in`.soundless.companion.classifier
 
-import in.soundless.companion.notification.EventType
-import in.soundless.companion.notification.ParsedNotificationData
+import `in`.soundless.companion.notification.EventType
+import `in`.soundless.companion.notification.ParsedNotificationData
 
 data class ClassificationDecision(
     val isEligible: Boolean,

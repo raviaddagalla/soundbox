@@ -12,6 +12,7 @@ import { DemoControlModal } from './features/demo/DemoControlModal';
 import { useSettingsStore } from './stores/useSettingsStore';
 import { useTransactionStore } from './stores/useTransactionStore';
 import { useDeviceStore } from './stores/useDeviceStore';
+import { setupNativeBridge } from './services/companion/nativeBridge';
 
 export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
@@ -27,6 +28,7 @@ export const App: React.FC = () => {
     loadTransactions();
     loadDiagnosticLogs();
     initPairingListeners();
+    setupNativeBridge();
   }, [loadSettings, loadTransactions, loadDiagnosticLogs, initPairingListeners]);
 
   useEffect(() => {

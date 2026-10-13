@@ -1,102 +1,196 @@
-package in.soundless.companion
+package `in`.soundless.companion
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
+import android.util.Log
 import android.view.View
+import android.webkit.JavascriptInterface
+import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
+import android.webkit.WebSettings
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import android.widget.Button
-import android.widget.TextView
+import android.widget.LinearLayout
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationManagerCompat
-import com.google.android.material.card.MaterialCardView
-import in.soundless.companion.notification.EventType
+import androidx.webkit.WebViewAssetLoader
+import com.google.gson.Gson
+import `in`.soundless.companion.notification.EventType
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var cardPermission: MaterialCardView
-    private lateinit var textPermissionTitle: TextView
-    private lateinit var textPermissionDesc: TextView
-    private lateinit var btnGrantPermission: Button
-    private lateinit var btnTestVoice: Button
-    private lateinit var textEventLog: TextView
-    private lateinit var textServiceStatus: TextView
+    private val TAG = "MainActivity"
+    private lateinit var webView: WebView
+    private lateinit var bannerPermission: LinearLayout
+    private lateinit var btnEnablePermission: Button
+    private val gson = Gson()
 
+    @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        cardPermission = findViewById(R.id.cardPermission)
-        textPermissionTitle = findViewById(R.id.textPermissionTitle)
-        textPermissionDesc = findViewById(R.id.textPermissionDesc)
-        btnGrantPermission = findViewById(R.id.btnGrantPermission)
-        btnTestVoice = findViewById(R.id.btnTestVoice)
-        textEventLog = findViewById(R.id.textEventLog)
-        textServiceStatus = findViewById(R.id.textServiceStatus)
+        webView = findViewById(R.id.webView)
+        bannerPermission = findViewById(R.id.bannerPermission)
+        btnEnablePermission = findViewById(R.id.btnEnablePermission)
 
-        btnGrantPermission.setOnClickListener {
-            // Open Android system notification listener settings
+        btnEnablePermission.setOnClickListener {
             val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
             startActivity(intent)
         }
 
-        btnTestVoice.setOnClickListener {
-            val app = application as SoundlessApp
-            app.ttsManager.announce(25.0, EventType.INCOMING_PAYMENT, "Soundless UPI. Twenty-five rupees received.")
-            appendLog("Test announcement triggered: ₹25.00")
+        // Configure modern WebView for local HTML/JS/CSS app
+        webView.settings.apply {
+            javaScriptEnabled = true
+            domStorageEnabled = true
+            databaseEnabled = true
+            allowFileAccess = true
+            allowContentAccess = true
+            cacheMode = WebSettings.LOAD_DEFAULT
+            mediaPlaybackRequiresUserGesture = false
+            useWideViewPort = true
+            loadWithOverviewMode = true
+        }
+
+        // Use modern Google WebViewAssetLoader to serve Vite web app from assets securely
+        val assetLoader = WebViewAssetLoader.Builder()
+            .addPathHandler("/", WebViewAssetLoader.AssetsPathHandler(this))
+            .build()
+
+        webView.webViewClient = object : WebViewClient() {
+            override fun shouldInterceptRequest(
+                view: WebView,
+                request: WebResourceRequest
+            ): WebResourceResponse? {
+                return assetLoader.shouldInterceptRequest(request.url)
+            }
+
+            override fun onPageFinished(view: WebView?, url: String?) {
+                super.onPageFinished(view, url)
+                Log.d(TAG, "WebView page finished loading: $url")
+                syncStateToWebView()
+            }
+        }
+
+        // Expose native companion bridge to window.AndroidBridge in JavaScript
+        webView.addJavascriptInterface(AndroidBridge(), "AndroidBridge")
+
+        // Load the bundled Stitch Web Application
+        webView.loadUrl("https://appassets.androidplatform.net/index.html")
+
+        // Intercept back button for web navigation
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (webView.canGoBack()) {
+                    webView.goBack()
+                } else {
+                    isEnabled = false
+                    onBackPressedDispatcher.onBackPressed()
+                }
+            }
+        })
+
+        // Forward real-time payment notifications to the WebView
+        val app = application as SoundlessApp
+        app.eventListeners.add { event ->
+            val json = gson.toJson(event)
+            Log.i(TAG, "Forwarding live payment event to WebView: ${event.amount} from ${event.appDisplayName}")
+            webView.post {
+                webView.evaluateJavascript(
+                    "if (typeof window.onAndroidPaymentEvent === 'function') { window.onAndroidPaymentEvent($json); }",
+                    null
+                )
+            }
         }
     }
 
     override fun onResume() {
         super.onResume()
-        updatePermissionStatus()
-        renderRecentLogs()
+        updatePermissionBanner()
+        syncStateToWebView()
     }
 
-    private fun updatePermissionStatus() {
+    private fun syncStateToWebView() {
         val isGranted = isNotificationServiceEnabled()
-        if (isGranted) {
-            textPermissionTitle.text = getString(R.string.permission_granted)
-            textPermissionDesc.text = "Soundless UPI is actively listening for incoming payment notifications."
-            btnGrantPermission.visibility = View.GONE
-            cardPermission.setCardBackgroundColor(getColor(R.color.white))
-            cardPermission.strokeColor = getColor(R.color.teal_confirm)
-            textServiceStatus.text = "Listening"
-            textServiceStatus.setBackgroundColor(0xFFD1FAE5.toInt()) // light emerald
-            textServiceStatus.setTextColor(0xFF065F46.toInt())
-        } else {
-            textPermissionTitle.text = getString(R.string.permission_required)
-            textPermissionDesc.text = getString(R.string.permission_desc)
-            btnGrantPermission.visibility = View.VISIBLE
-            cardPermission.setCardBackgroundColor(0xFFFFFBEB.toInt()) // amber
-            cardPermission.strokeColor = 0xFFFCD34D.toInt()
-            textServiceStatus.text = "Permission Needed"
-            textServiceStatus.setBackgroundColor(0xFFFEF3C7.toInt())
-            textServiceStatus.setTextColor(0xFF92400E.toInt())
-        }
-    }
-
-    private fun isNotificationServiceEnabled(): Boolean {
-        val pkgName = packageName
-        val enabledPackages = NotificationManagerCompat.getEnabledListenerPackages(this)
-        return enabledPackages.contains(pkgName)
-    }
-
-    private fun renderRecentLogs() {
         val app = application as SoundlessApp
-        val events = app.recentEvents
-        if (events.isEmpty()) {
-            textEventLog.text = "Soundless Companion active.\nWaiting for incoming UPI payments..."
-        } else {
-            val sb = StringBuilder()
-            for (evt in events) {
-                sb.append("[${evt.appDisplayName}] ${evt.eventType} - ₹${evt.amount} -> ${evt.announcementStatus}\n")
-            }
-            textEventLog.text = sb.toString()
+        val recentEventsJson = gson.toJson(app.recentEvents)
+
+        webView.post {
+            webView.evaluateJavascript(
+                "if (typeof window.onNotificationPermissionUpdate === 'function') { window.onNotificationPermissionUpdate($isGranted); }",
+                null
+            )
+            webView.evaluateJavascript(
+                "if (typeof window.onAndroidRecentEvents === 'function') { window.onAndroidRecentEvents($recentEventsJson); }",
+                null
+            )
         }
     }
 
-    private fun appendLog(msg: String) {
-        val current = textEventLog.text.toString()
-        textEventLog.text = "$msg\n$current"
+    fun isNotificationServiceEnabled(): Boolean {
+        val enabledPackages = NotificationManagerCompat.getEnabledListenerPackages(this)
+        return enabledPackages.contains(packageName)
+    }
+
+    private fun updatePermissionBanner() {
+        val granted = isNotificationServiceEnabled()
+        bannerPermission.visibility = if (granted) View.GONE else View.VISIBLE
+    }
+
+    inner class AndroidBridge {
+        @JavascriptInterface
+        fun isNotificationAccessGranted(): Boolean {
+            return isNotificationServiceEnabled()
+        }
+
+        @JavascriptInterface
+        fun openNotificationSettings() {
+            runOnUiThread {
+                val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
+                startActivity(intent)
+            }
+        }
+
+        @JavascriptInterface
+        fun speakText(text: String, language: String?) {
+            runOnUiThread {
+                val app = application as SoundlessApp
+                app.ttsManager.announce(0.0, EventType.INCOMING_PAYMENT, text)
+            }
+        }
+
+        @JavascriptInterface
+        fun playTestAnnouncement(amount: Double) {
+            runOnUiThread {
+                val app = application as SoundlessApp
+                app.ttsManager.announce(amount, EventType.INCOMING_PAYMENT)
+            }
+        }
+
+        @JavascriptInterface
+        fun getRecentEvents(): String {
+            val app = application as SoundlessApp
+            return gson.toJson(app.recentEvents)
+        }
+
+        @JavascriptInterface
+        fun notifyWebReady() {
+            runOnUiThread {
+                syncStateToWebView()
+            }
+        }
+
+        @JavascriptInterface
+        fun isNativeCompanion(): Boolean = true
+
+        @JavascriptInterface
+        fun getBridgePort(): Int = 8765
+
+        @JavascriptInterface
+        fun getAppVersion(): String = "1.0.0"
     }
 }

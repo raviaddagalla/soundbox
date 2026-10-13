@@ -75,6 +75,18 @@ export class SpeechManager {
       await chimePlayer.playPaymentChime();
     }
 
+    // Direct hardware Android TextToSpeech if running in native companion
+    const androidBridge = typeof window !== 'undefined' ? (window as unknown as { AndroidBridge?: { speakText?: (t: string, l: string) => void } }).AndroidBridge : undefined;
+    if (androidBridge && typeof androidBridge.speakText === 'function') {
+      try {
+        androidBridge.speakText(text, settings.language);
+        this.lastAnnouncedText = text;
+        return true;
+      } catch (err) {
+        console.warn('Native Android TTS failed, falling back to Web Speech Synthesis:', err);
+      }
+    }
+
     return new Promise((resolve) => {
       const item: SpeechQueueItem = {
         id: Math.random().toString(36).substring(2, 9),

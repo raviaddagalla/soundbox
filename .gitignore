@@ -1,5 +1,25 @@
+# Dependencies & Web Build
 node_modules/
 dist/
 reference/
 .DS_Store
 *.local
+
+# Android Build Artifacts & Gradle
+.gradle/
+**/build/
+android-companion/.gradle/
+android-companion/app/build/
+android-companion/local.properties
+*.apk
+*.aab
+
+# Local downloaded SDK and Gradle binaries
+.tools/android-sdk/
+.tools/gradle-*/
+
+# IDE & OS files
+.idea/
+*.iml
+.vscode/
+*.log

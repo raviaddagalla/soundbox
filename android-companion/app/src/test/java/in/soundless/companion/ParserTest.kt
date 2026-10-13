@@ -1,12 +1,12 @@
-package in.soundless.companion
+package `in`.soundless.companion
 
-import in.soundless.companion.classifier.PaymentClassifier
-import in.soundless.companion.dedup.EventDeduplicator
-import in.soundless.companion.notification.EventType
-import in.soundless.companion.notification.RawNotification
-import in.soundless.companion.parser.AmountExtractor
-import in.soundless.companion.parser.GooglePayParser
-import in.soundless.companion.parser.PhonePeParser
+import `in`.soundless.companion.classifier.PaymentClassifier
+import `in`.soundless.companion.dedup.EventDeduplicator
+import `in`.soundless.companion.notification.EventType
+import `in`.soundless.companion.notification.RawNotification
+import `in`.soundless.companion.parser.AmountExtractor
+import `in`.soundless.companion.parser.GooglePayParser
+import `in`.soundless.companion.parser.PhonePeParser
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

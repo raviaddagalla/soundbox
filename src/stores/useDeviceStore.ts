@@ -40,6 +40,19 @@ export const useDeviceStore = create<DeviceStoreState>((set, get) => ({
   diagnosticLogs: [],
 
   initPairingListeners: () => {
+    // Check if running inside native Android companion
+    const androidBridge = typeof window !== 'undefined' ? (window as unknown as { AndroidBridge?: { isNotificationAccessGranted?: () => boolean } }).AndroidBridge : undefined;
+    if (androidBridge && typeof androidBridge.isNotificationAccessGranted === 'function') {
+      try {
+        const isGranted = Boolean(androidBridge.isNotificationAccessGranted());
+        set({ notificationPermissionGranted: isGranted });
+      } catch {
+        // fallback
+      }
+      // Auto-connect to companion bridge on phone localhost
+      get().connectCompanion('127.0.0.1');
+    }
+
     devicePairingService.subscribeStatus((status, details) => {
       set({
         connectionStatus: status,

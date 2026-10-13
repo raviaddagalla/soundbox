@@ -1,4 +1,4 @@
-package in.soundless.companion.announcement
+package `in`.soundless.companion.announcement
 
 import android.content.Context
 import android.media.AudioAttributes
@@ -8,7 +8,7 @@ import android.os.Bundle
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import android.util.Log
-import in.soundless.companion.notification.EventType
+import `in`.soundless.companion.notification.EventType
 import java.util.Locale
 import java.util.concurrent.ConcurrentLinkedQueue
 
