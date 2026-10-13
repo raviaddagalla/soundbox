@@ -3,16 +3,17 @@ import {
   Activity,
   CheckCircle2,
   AlertTriangle,
-  XCircle,
   Smartphone,
   Cpu,
   RefreshCw,
   Terminal,
   Send,
-  ShieldAlert,
+  ShieldCheck,
   Wifi,
   Trash2,
-  Sparkles
+  Sparkles,
+  ExternalLink,
+  Battery
 } from 'lucide-react';
 import { useDeviceStore } from '../../stores/useDeviceStore';
 import { useSettingsStore } from '../../stores/useSettingsStore';
@@ -26,14 +27,10 @@ export const DiagnosticsView: React.FC = () => {
     connectionStatus,
     statusMessage,
     notificationPermissionGranted,
-    batteryOptimizationIgnored,
     companionHost,
     companionPort,
-    pairingToken,
-    recentPipelineLogs,
     diagnosticLogs,
     connectCompanion,
-    disconnectCompanion,
     setNotificationPermission,
     clearDiagnostics
   } = useDeviceStore();
@@ -41,7 +38,6 @@ export const DiagnosticsView: React.FC = () => {
   const { settings } = useSettingsStore();
   const { addTransaction } = useTransactionStore();
 
-  // Raw payload tester state
   const [testPackage, setTestPackage] = useState<string>(PaymentAppPackage.PHONEPE);
   const [testTitle, setTestTitle] = useState('Payment Received');
   const [testBody, setTestBody] = useState('₹500 received from Rajesh Kumar (UTR: 328910482910)');
@@ -66,312 +62,254 @@ export const DiagnosticsView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto pb-12">
+    <div className="space-y-5 max-w-xl mx-auto pb-12">
       
       {/* Title */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
-            Device & Pipeline Diagnostics
+          <h2 className="text-xl sm:text-2xl font-extrabold text-text-primary tracking-tight">
+            Device Setup & Diagnostics
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Real-time status of notification access, companion bridge, TTS voice engine, and pipeline logs
+          <p className="text-xs text-text-muted mt-0.5">
+            Hardware-free soundbox configuration, permission status, and bridge health
           </p>
         </div>
 
         <button
           onClick={() => connectCompanion()}
-          className="px-3.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition flex items-center space-x-1.5 shadow-sm"
+          className="px-3.5 py-1.5 rounded-xl border border-surface-border bg-white hover:bg-slate-50 text-text-secondary text-xs font-bold transition flex items-center gap-1.5 shadow-subtle cursor-pointer"
         >
-          <RefreshCw className="w-3.5 h-3.5 text-indigo-600" />
-          <span>Check Bridge</span>
+          <RefreshCw className="w-3.5 h-3.5 text-emerald-primary" />
+          <span>Ping Bridge</span>
         </button>
       </div>
 
-      {/* Diagnostics Health Matrix */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* 4-Step Setup & Health Matrix */}
+      <div className="space-y-2.5">
         
-        {/* Card 1: Notification Permission */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">Notification Access</span>
-            {notificationPermissionGranted ? (
-              <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-            ) : (
-              <AlertTriangle className="w-5 h-5 text-amber-500" />
-            )}
+        {/* Step 1: Notification Access */}
+        <div className={`p-4 rounded-2xl border shadow-subtle flex items-center justify-between ${
+          notificationPermissionGranted
+            ? 'bg-white border-surface-border'
+            : 'bg-amber-50 border-amber-200'
+        }`}>
+          <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xs ${
+              notificationPermissionGranted ? 'bg-secondary-container text-on-secondary-container' : 'bg-amber-200 text-amber-900'
+            }`}>
+              1
+            </div>
+            <div>
+              <span className="text-xs font-bold text-text-primary block">
+                Notification Listener Permission
+              </span>
+              <span className="text-[11px] text-text-muted">
+                {notificationPermissionGranted
+                  ? 'Access Granted • Intercepting push credit alerts'
+                  : 'Action Required • Grant permission in Android Settings'}
+              </span>
+            </div>
           </div>
-          <div className={`text-base font-extrabold ${
-            notificationPermissionGranted ? 'text-emerald-700' : 'text-amber-700'
-          }`}>
-            {notificationPermissionGranted ? 'Active / Granted' : 'Access Required'}
-          </div>
-          <p className="text-[11px] text-slate-400">
-            {notificationPermissionGranted
-              ? 'Companion service can read push alerts'
-              : 'Requires permission in Android Settings'}
-          </p>
+
           <button
             onClick={() => setNotificationPermission(!notificationPermissionGranted)}
-            className="text-[11px] text-indigo-600 font-bold hover:underline block pt-1"
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+              notificationPermissionGranted
+                ? 'bg-surface-container text-text-secondary hover:bg-slate-200'
+                : 'bg-emerald-primary text-white shadow-sm'
+            }`}
           >
-            {notificationPermissionGranted ? 'Toggle to Simulated Revoked' : 'Toggle to Granted'}
+            {notificationPermissionGranted ? 'Revoke Test' : 'Grant Access'}
           </button>
         </div>
 
-        {/* Card 2: Companion Bridge Link */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">Companion Bridge</span>
-            {connectionStatus === DeviceConnectionStatus.CONNECTED_LOCAL_BRIDGE ? (
-              <Wifi className="w-5 h-5 text-emerald-600" />
-            ) : (
-              <Smartphone className="w-5 h-5 text-slate-400" />
-            )}
+        {/* Step 2: Battery Optimization */}
+        <div className="p-4 rounded-2xl bg-white border border-surface-border shadow-subtle flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-secondary-container text-on-secondary-container flex items-center justify-center font-bold text-xs">
+              2
+            </div>
+            <div>
+              <span className="text-xs font-bold text-text-primary block">
+                Battery Sleep Optimization
+              </span>
+              <span className="text-[11px] text-text-muted">
+                Foreground audio channel keeps soundbox alive with screen off
+              </span>
+            </div>
           </div>
-          <div className="text-base font-extrabold text-slate-900">
-            {connectionStatus === DeviceConnectionStatus.CONNECTED_LOCAL_BRIDGE
-              ? 'Companion Linked'
-              : connectionStatus === DeviceConnectionStatus.SIMULATED_DEMO
-              ? 'Demo Simulator'
-              : 'Standalone Web'}
-          </div>
-          <p className="text-[11px] text-slate-400 truncate" title={statusMessage}>
-            {statusMessage}
-          </p>
-          <div className="text-[10px] text-slate-400 font-mono">
-            ws://{companionHost}:{companionPort}
-          </div>
+          <span className="text-[11px] font-bold text-emerald-primary bg-secondary-container px-2.5 py-1 rounded-full">
+            ✓ Ignored
+          </span>
         </div>
 
-        {/* Card 3: TTS Engine */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">Text-to-Speech Engine</span>
-            <Cpu className="w-5 h-5 text-indigo-600" />
+        {/* Step 3: Local Bridge Pairing */}
+        <div className="p-4 rounded-2xl bg-white border border-surface-border shadow-subtle flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-secondary-container text-on-secondary-container flex items-center justify-center font-bold text-xs">
+              3
+            </div>
+            <div>
+              <span className="text-xs font-bold text-text-primary block">
+                Companion Bridge Link
+              </span>
+              <span className="text-[11px] text-text-muted font-mono">
+                ws://{companionHost}:{companionPort} • {statusMessage}
+              </span>
+            </div>
           </div>
-          <div className="text-base font-extrabold text-slate-900">
-            Ready ({ttsVoices.length} Voices)
-          </div>
-          <p className="text-[11px] text-slate-400">
-            SpeechSynthesis active ({settings.voice.language})
-          </p>
-          <div className="text-[10px] text-emerald-600 font-semibold">
-            Web Audio Chime: Loaded
-          </div>
+          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
+            connectionStatus === DeviceConnectionStatus.CONNECTED_LOCAL_BRIDGE
+              ? 'bg-emerald-100 text-emerald-800'
+              : 'bg-slate-100 text-slate-700'
+          }`}>
+            {connectionStatus === DeviceConnectionStatus.CONNECTED_LOCAL_BRIDGE ? 'Linked' : 'Standalone'}
+          </span>
         </div>
 
-        {/* Card 4: Battery Optimization */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">Background Reliability</span>
-            <Activity className="w-5 h-5 text-indigo-600" />
+        {/* Step 4: TextToSpeech Voice Ready */}
+        <div className="p-4 rounded-2xl bg-white border border-surface-border shadow-subtle flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-secondary-container text-on-secondary-container flex items-center justify-center font-bold text-xs">
+              4
+            </div>
+            <div>
+              <span className="text-xs font-bold text-text-primary block">
+                Speech Synthesis Engine
+              </span>
+              <span className="text-[11px] text-text-muted">
+                {ttsVoices.length > 0 ? `${ttsVoices.length} Voices detected` : 'Active on device'} • {settings.voice.language}
+              </span>
+            </div>
           </div>
-          <div className="text-base font-extrabold text-slate-900">
-            Foreground Service
-          </div>
-          <p className="text-[11px] text-slate-400">
-            Persistent audio channel enabled
-          </p>
-          <div className="text-[10px] text-indigo-600 font-medium">
-            Dedup window: {settings.deduplication.windowSeconds}s
-          </div>
+          <span className="text-[11px] font-bold text-emerald-primary bg-secondary-container px-2.5 py-1 rounded-full">
+            ✓ Ready
+          </span>
         </div>
 
       </div>
 
-      {/* Interactive Raw Payload Pipeline Tester */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-          <div className="flex items-center space-x-2 text-indigo-700">
+      {/* Interactive Raw Payload Tester */}
+      <div className="bg-white rounded-2xl border border-surface-border p-5 shadow-subtle space-y-4">
+        <div className="flex items-center justify-between pb-3 border-b border-surface-border">
+          <div className="flex items-center gap-2 text-emerald-primary">
             <Terminal className="w-5 h-5" />
-            <h3 className="font-bold text-slate-900 text-sm">Interactive Raw Payload Pipeline Tester</h3>
+            <h3 className="font-extrabold text-text-primary text-sm">Interactive Raw Payload Tester</h3>
           </div>
-          <span className="text-[11px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-bold uppercase">
-            Live Test Bench
+          <span className="text-[10px] bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded-full font-bold uppercase">
+            Live Bench
           </span>
         </div>
 
-        <p className="text-xs text-slate-500">
-          Paste any sample notification title and text below to verify how the 12-step parser and safety classifier evaluate it.
+        <p className="text-xs text-text-muted leading-relaxed">
+          Test any custom push notification text or JSON to evaluate how the parser and safety classifier handle it.
         </p>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-700">App Package</label>
+        <div className="space-y-2.5 text-xs">
+          <div>
+            <label className="text-[11px] font-bold text-text-primary block mb-1">Source Package</label>
             <select
               value={testPackage}
               onChange={(e) => setTestPackage(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-medium bg-white outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3 py-2 rounded-xl border border-surface-border text-xs bg-white focus:outline-none focus:border-emerald-primary"
             >
               <option value={PaymentAppPackage.PHONEPE}>PhonePe (com.phonepe.app)</option>
-              <option value={PaymentAppPackage.GPAY}>Google Pay (com.google.android...)</option>
+              <option value={PaymentAppPackage.GPAY}>Google Pay (com.google.android.apps...)</option>
               <option value={PaymentAppPackage.PAYTM}>Paytm (net.one97.paytm)</option>
-              <option value={PaymentAppPackage.BHIM}>BHIM (in.org.npci.upiapp)</option>
+              <option value={PaymentAppPackage.BHIM}>BHIM UPI (in.org.npci.upiapp)</option>
               <option value={PaymentAppPackage.GENERIC_UPI}>Generic UPI Alert</option>
             </select>
           </div>
 
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-700">Notification Title</label>
+          <div>
+            <label className="text-[11px] font-bold text-text-primary block mb-1">Notification Title</label>
             <input
               type="text"
               value={testTitle}
               onChange={(e) => setTestTitle(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-medium outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3 py-2 rounded-xl border border-surface-border text-xs focus:outline-none focus:border-emerald-primary"
             />
           </div>
 
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-700">Notification Body / Text</label>
+          <div>
+            <label className="text-[11px] font-bold text-text-primary block mb-1">Notification Body</label>
             <input
               type="text"
               value={testBody}
               onChange={(e) => setTestBody(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-medium outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3 py-2 rounded-xl border border-surface-border text-xs focus:outline-none focus:border-emerald-primary"
             />
           </div>
-
         </div>
 
-        {/* Quick Presets for Tester */}
-        <div className="flex flex-wrap items-center gap-1.5 pt-1 text-xs">
-          <span className="text-slate-400 font-medium">Quick load:</span>
-          <button
-            onClick={() => {
-              setTestPackage(PaymentAppPackage.PHONEPE);
-              setTestTitle('Payment Received');
-              setTestBody('₹25.50 received from Priya Sharma (UTR: 328910482910)');
-            }}
-            className="px-2 py-0.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-semibold"
-          >
-            ₹25.50 PhonePe
-          </button>
-          <button
-            onClick={() => {
-              setTestPackage(PaymentAppPackage.GPAY);
-              setTestTitle('Google Pay');
-              setTestBody('₹10,000 received from Anand Kumar via UPI. Ref: 482910492810');
-            }}
-            className="px-2 py-0.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-semibold"
-          >
-            ₹10,000 GPay
-          </button>
-          <button
-            onClick={() => {
-              setTestPackage(PaymentAppPackage.PHONEPE);
-              setTestTitle('Payment Successful');
-              setTestBody('You paid ₹500 to Ramesh Kirana from A/c XX1234');
-            }}
-            className="px-2 py-0.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 text-[11px] font-semibold"
-          >
-            Outgoing Debit (Test Rejection)
-          </button>
-          <button
-            onClick={() => {
-              setTestPackage(PaymentAppPackage.GPAY);
-              setTestTitle('Google Pay');
-              setTestBody('Payment of ₹150 failed. Bank server timed out.');
-            }}
-            className="px-2 py-0.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-800 text-[11px] font-semibold"
-          >
-            Failed Payment (Test Rejection)
-          </button>
-        </div>
+        <button
+          onClick={handleRunRawPayloadTest}
+          disabled={isTestingPayload}
+          className="w-full py-2.5 px-4 bg-navy-dark hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer shadow-subtle disabled:opacity-50"
+        >
+          <Send className="w-3.5 h-3.5" />
+          <span>Execute Pipeline Evaluation & Announce</span>
+        </button>
 
-        <div className="pt-2 flex justify-end">
-          <button
-            onClick={handleRunRawPayloadTest}
-            disabled={isTestingPayload}
-            className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-sm shadow-indigo-300 disabled:opacity-50"
-          >
-            <Send className="w-3.5 h-3.5" />
-            <span>Execute Pipeline Evaluation</span>
-          </button>
-        </div>
-
-        {/* Live Test Results Inspection */}
+        {/* Test Result Inspector */}
         {testResult && (
-          <div className="mt-4 p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-3">
+          <div className="p-3.5 rounded-xl bg-surface-container-low border border-surface-border text-xs space-y-2">
             <div className="flex items-center justify-between">
-              <span className="font-bold text-xs text-slate-800">Pipeline Result Breakdown:</span>
-              <span className={`px-2 py-0.5 rounded text-xs font-extrabold uppercase ${
-                testResult.wasAnnounced ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'
+              <span className="font-bold text-text-primary">Pipeline Result:</span>
+              <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase ${
+                testResult.wasAnnounced ? 'bg-secondary-container text-on-secondary-container' : 'bg-rose-100 text-rose-800'
               }`}>
-                {testResult.wasAnnounced ? 'Announced' : 'Blocked from Announcement'}
+                {testResult.wasAnnounced ? 'Announced' : 'Silenced'}
               </span>
             </div>
-
-            <div className="space-y-1.5 font-mono text-[11px]">
-              {testResult.logs.map((log: any, idx: number) => (
-                <div key={idx} className="flex items-start space-x-2">
-                  <span className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${
-                    log.status === 'SUCCESS'
-                      ? 'bg-emerald-100 text-emerald-700'
-                      : log.status === 'REJECTED'
-                      ? 'bg-red-100 text-red-700'
-                      : log.status === 'SUPPRESSED'
-                      ? 'bg-amber-100 text-amber-700'
-                      : 'bg-slate-200 text-slate-700'
-                  }`}>
-                    {log.stage.toUpperCase()}
-                  </span>
-                  <span className="text-slate-700">{log.detail}</span>
-                </div>
-              ))}
-            </div>
-
+            <p className="text-[11px] text-text-muted">{testResult.event.classificationReason}</p>
             {testResult.event.announcementText && (
-              <div className="pt-2 border-t border-slate-200 text-xs text-indigo-700 font-semibold italic">
-                Announcement speech: "{testResult.event.announcementText}"
-              </div>
+              <p className="text-[11px] text-emerald-primary font-bold italic">
+                "{testResult.event.announcementText}"
+              </p>
             )}
           </div>
         )}
 
       </div>
 
-      {/* System Diagnostic Logs List */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-          <div>
-            <h3 className="font-bold text-slate-900 text-sm">System Diagnostic Logs</h3>
-            <p className="text-xs text-slate-400">Chronological diagnostic entries</p>
-          </div>
+      {/* Diagnostic Logs */}
+      <div className="bg-white rounded-2xl border border-surface-border p-5 shadow-subtle space-y-3">
+        <div className="flex items-center justify-between pb-2 border-b border-surface-border">
+          <span className="text-xs font-bold text-text-primary uppercase tracking-wide">
+            System Telemetry Logs
+          </span>
           <button
             onClick={clearDiagnostics}
-            className="text-xs text-slate-400 hover:text-red-600 font-semibold flex items-center space-x-1"
+            className="text-[11px] text-text-muted hover:text-rose-alert font-bold flex items-center gap-1 cursor-pointer"
           >
-            <Trash2 className="w-3.5 h-3.5" />
-            <span>Clear Logs</span>
+            <Trash2 className="w-3 h-3" />
+            <span>Clear</span>
           </button>
         </div>
 
-        <div className="space-y-2 max-h-72 overflow-y-auto font-mono text-xs">
+        <div className="space-y-1.5 max-h-52 overflow-y-auto font-mono text-[11px]">
           {diagnosticLogs.map((log) => (
-            <div key={log.id} className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex items-start justify-between">
-              <div>
-                <div className="flex items-center space-x-2">
-                  <span className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${
+            <div key={log.id} className="p-2 rounded-lg bg-surface-container-low flex items-start justify-between">
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-1.5">
+                  <span className={`text-[9px] font-bold px-1 rounded ${
                     log.level === 'SUCCESS' ? 'bg-emerald-100 text-emerald-800' :
-                    log.level === 'WARN' ? 'bg-amber-100 text-amber-800' :
-                    log.level === 'ERROR' ? 'bg-red-100 text-red-800' :
-                    'bg-slate-200 text-slate-800'
+                    log.level === 'WARN' ? 'bg-amber-100 text-amber-800' : 'bg-slate-200 text-slate-800'
                   }`}>
                     {log.level}
                   </span>
-                  <span className="font-bold text-slate-700 text-[11px]">{log.category}</span>
-                  <span className="text-slate-400 text-[10px]">{new Date(log.timestamp).toLocaleTimeString()}</span>
+                  <span className="font-bold text-text-primary">{log.category}</span>
                 </div>
-                <p className="text-slate-600 text-[11px] mt-1">{log.message}</p>
+                <p className="text-text-muted text-[10px]">{log.message}</p>
               </div>
+              <span className="text-[9px] text-text-muted">{new Date(log.timestamp).toLocaleTimeString()}</span>
             </div>
           ))}
 
           {diagnosticLogs.length === 0 && (
-            <div className="py-8 text-center text-slate-400 text-xs">
-              No diagnostic entries logged yet.
+            <div className="py-4 text-center text-xs text-text-muted">
+              No diagnostic entries recorded.
             </div>
           )}
         </div>

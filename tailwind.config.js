@@ -7,34 +7,52 @@ export default {
   theme: {
     extend: {
       colors: {
-        brand: {
-          50: '#eef2ff',
-          100: '#e0e7ff',
-          200: '#c7d2fe',
-          300: '#a5b4fc',
-          400: '#818cf8',
-          500: '#6366f1',
-          600: '#4f46e5',
-          700: '#4338ca',
-          800: '#3730a3',
-          900: '#312e81',
-          950: '#1e1b4b',
-        },
-        upi: {
-          teal: '#00897b',
-          emerald: '#10b981',
-          blue: '#1a73e8',
-          purple: '#5f259f', // PhonePe signature purple
-          dark: '#0f172a',
-        }
+        // Stitch Design Tokens
+        'surface-background': '#F8FAFC',
+        'surface-container': '#ECEEF0',
+        'surface-container-low': '#F2F4F6',
+        'surface-container-lowest': '#FFFFFF',
+        'surface-container-high': '#E6E8EA',
+        'surface-border': '#E2E8F0',
+        'surface-border-strong': '#CBD5E1',
+
+        // Deep Navy Terminal Hero
+        'navy-dark': '#0A0F1D',
+        'navy-surface': '#111827',
+        'navy-muted': '#1E293B',
+        'primary-container': '#131B2E',
+        'on-primary-container': '#94A3B8',
+
+        // Emerald / Mint Feedback
+        'emerald-primary': '#059669',
+        'emerald-accent': '#10B981',
+        'secondary': '#006C4A',
+        'secondary-fixed': '#85F8C4',
+        'secondary-fixed-dim': '#68DBA9',
+        'secondary-container': '#D1FAE5',
+        'on-secondary': '#FFFFFF',
+        'on-secondary-fixed': '#002114',
+        'on-secondary-container': '#00714E',
+
+        // Content & Text
+        'text-primary': '#0F172A',
+        'text-secondary': '#475569',
+        'text-muted': '#64748B',
+        'text-inverse': '#FFFFFF',
+        'text-emerald': '#047857',
+
+        // Alerts
+        'amber-warning': '#F59E0B',
+        'rose-alert': '#EF4444',
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        sans: ['"Plus Jakarta Sans"', 'Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        mono: ['"JetBrains Mono"', 'monospace'],
       },
       boxShadow: {
-        'subtle': '0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05)',
-        'card': '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05)',
-        'float': '0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04)',
+        'subtle': '0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04)',
+        'elevated': '0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.03)',
+        'glow-emerald': '0 0 16px 2px rgba(16, 185, 129, 0.3)',
       }
     },
   },

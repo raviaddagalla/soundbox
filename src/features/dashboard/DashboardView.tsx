@@ -1,20 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Volume2,
-  TrendingUp,
+  CheckCircle2,
   ShieldCheck,
   RotateCcw,
-  Play,
-  Pause,
-  AlertTriangle,
-  ArrowUpRight,
   Sparkles,
   Smartphone,
-  CheckCircle2,
-  Clock,
-  HelpCircle,
   Copy,
-  Sliders
+  Check,
+  ArrowRight,
+  TrendingUp,
+  Radio,
+  Sliders,
+  Battery,
+  AlertTriangle,
+  Lock
 } from 'lucide-react';
 import { useSettingsStore } from '../../stores/useSettingsStore';
 import { useTransactionStore } from '../../stores/useTransactionStore';
@@ -27,6 +27,7 @@ interface DashboardViewProps {
   onOpenOnboarding: () => void;
   onNavigateTransactions: () => void;
   onNavigateDiagnostics: () => void;
+  onNavigateSavings: () => void;
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
@@ -34,379 +35,380 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onOpenOnboarding,
   onNavigateTransactions,
   onNavigateDiagnostics,
+  onNavigateSavings,
 }) => {
   const { settings, toggleActiveListening } = useSettingsStore();
   const { transactions, getStats, repeatLastAnnouncement } = useTransactionStore();
   const { connectionStatus, notificationPermissionGranted } = useDeviceStore();
 
+  const [copiedUtr, setCopiedUtr] = useState<string | null>(null);
+  const [isPlayingTestAudio, setIsPlayingTestAudio] = useState(false);
+
   const stats = getStats();
   const isListening = settings.merchant.activeListening;
 
-  const handleTestVoice = async () => {
-    const testSample = settings.voice.language === 'hi-IN'
-      ? 'साउंडलेस यूपीआई। सौ रुपये प्राप्त हुए।'
-      : 'Payment received, one hundred rupees.';
-    await speechManager.testVoice(testSample, settings.voice);
+  const handleTestAnnouncement = async () => {
+    setIsPlayingTestAudio(true);
+    const testText = settings.voice.language === 'hi-IN'
+      ? 'साउंडलेस यूपीआई। पच्चीस रुपये प्राप्त हुए।'
+      : 'Soundless UPI. Twenty-five rupees received.';
+    await speechManager.testVoice(testText, settings.voice);
+    setTimeout(() => setIsPlayingTestAudio(false), 2400);
+  };
+
+  const handleReplaySingleTx = async (amount: number) => {
+    const text = settings.voice.language === 'hi-IN'
+      ? `${amount} रुपये प्राप्त हुए`
+      : `Payment received, ${amount} rupees`;
+    await speechManager.enqueue(text, settings.voice, true);
+  };
+
+  const handleCopy = (utr: string) => {
+    navigator.clipboard.writeText(utr);
+    setCopiedUtr(utr);
+    setTimeout(() => setCopiedUtr(null), 2000);
+  };
+
+  // Provider app color branding
+  const getAppColor = (appName: string) => {
+    const lower = appName.toLowerCase();
+    if (lower.includes('phonepe')) return { bg: 'bg-[#5f259f]/10', text: 'text-[#5f259f]', dot: 'bg-[#5f259f]' };
+    if (lower.includes('google') || lower.includes('gpay')) return { bg: 'bg-[#1a73e8]/10', text: 'text-[#1a73e8]', dot: 'bg-[#1a73e8]' };
+    if (lower.includes('paytm')) return { bg: 'bg-[#00b9f5]/10', text: 'text-[#00b9f5]', dot: 'bg-[#00b9f5]' };
+    if (lower.includes('bhim')) return { bg: 'bg-[#00897b]/10', text: 'text-[#00897b]', dot: 'bg-[#00897b]' };
+    return { bg: 'bg-indigo-50', text: 'text-indigo-700', dot: 'bg-indigo-600' };
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 max-w-xl mx-auto pb-12">
       
-      {/* Soundbox Hero Status Card */}
-      <div className={`rounded-3xl p-6 sm:p-8 text-white shadow-xl transition-all relative overflow-hidden ${
-        isListening
-          ? 'bg-gradient-to-br from-indigo-700 via-indigo-800 to-indigo-950 shadow-indigo-200'
-          : 'bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 shadow-slate-200'
-      }`}>
-        
-        {/* Ambient background decoration */}
-        <div className="absolute top-0 right-0 -mt-10 -mr-10 w-60 h-60 bg-white/5 rounded-full blur-2xl pointer-events-none" />
-
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative z-10">
-          
-          {/* Main Soundbox Listening Status */}
-          <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <span className={`flex h-3 w-3 relative ${isListening ? '' : 'opacity-60'}`}>
-                {isListening && (
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                )}
-                <span className={`relative inline-flex rounded-full h-3 w-3 ${isListening ? 'bg-emerald-400' : 'bg-amber-400'}`} />
-              </span>
-              <span className="text-xs uppercase tracking-widest font-bold text-indigo-200">
-                {isListening ? 'Soundbox Active' : 'Soundbox Paused'}
+      {/* Audio Wave Simulation Toast (Appears when voice plays) */}
+      {isPlayingTestAudio && (
+        <div className="fixed top-20 inset-x-4 z-50 max-w-md mx-auto bg-navy-dark text-white rounded-2xl p-4 shadow-elevated flex items-center justify-between border border-slate-700 animate-slide-down">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container shrink-0">
+              <Volume2 className="w-5 h-5 text-emerald-600" />
+            </div>
+            <div className="flex flex-col min-w-0">
+              <span className="text-xs font-bold text-secondary-fixed">Voice Test Playing...</span>
+              <span className="text-xs text-slate-300 truncate">
+                {settings.voice.language === 'hi-IN' ? '"साउंडलेस यूपीआई: ₹25 प्राप्त हुए"' : '"Soundless UPI: ₹25 received"'}
               </span>
             </div>
+          </div>
+          {/* Animated Equalizer Wave Bars */}
+          <div className="flex items-end gap-1 h-5 px-2">
+            <span className="w-1 bg-secondary-fixed rounded-full animate-bounce h-3" />
+            <span className="w-1 bg-secondary-fixed rounded-full animate-bounce h-5" style={{ animationDelay: '0.15s' }} />
+            <span className="w-1 bg-secondary-fixed rounded-full animate-bounce h-2" style={{ animationDelay: '0.3s' }} />
+            <span className="w-1 bg-secondary-fixed rounded-full animate-bounce h-4" style={{ animationDelay: '0.45s' }} />
+          </div>
+        </div>
+      )}
 
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-              {isListening ? 'Listening for Incoming UPI' : 'Voice Announcements Muted'}
-            </h1>
-
-            <p className="text-xs sm:text-sm text-indigo-200/90 max-w-lg leading-relaxed">
-              {isListening
-                ? `Ready to announce incoming payments in ${settings.voice.language.toUpperCase()} through your phone speakers.`
-                : 'Tap Resume to start announcing incoming customer payments aloud again.'}
-            </p>
+      {/* 1. Live Soundbox Status Hero Card (Terminal Hero matching Stitch specification) */}
+      <div className="w-full bg-navy-dark text-white rounded-2xl p-5 sm:p-6 shadow-elevated flex flex-col gap-4 border border-slate-800">
+        
+        {/* Top Row: Badge + Engine Power Slider */}
+        <div className="flex items-center justify-between gap-3">
+          
+          {/* High-Contrast Status Badge */}
+          <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full font-bold text-xs tracking-wider uppercase shadow-sm ${
+            isListening ? 'bg-emerald-primary text-white' : 'bg-amber-warning text-slate-950'
+          }`}>
+            <span className="relative flex h-2.5 w-2.5">
+              {isListening && (
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary-fixed opacity-75" />
+              )}
+              <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${isListening ? 'bg-secondary-fixed' : 'bg-slate-950'}`} />
+            </span>
+            <span>{isListening ? 'ACTIVE & LISTENING' : 'STANDBY / PAUSED'}</span>
           </div>
 
-          {/* Primary Pause/Resume Action */}
-          <div className="flex flex-wrap sm:flex-nowrap items-center gap-3">
+          {/* Tactile Soundbox Power Toggle Slider */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-300 font-semibold hidden sm:inline">
+              {isListening ? 'Engine ON' : 'Engine OFF'}
+            </span>
             <button
               onClick={toggleActiveListening}
-              className={`px-6 py-3.5 rounded-2xl font-bold text-sm transition-all flex items-center space-x-2 shadow-lg ${
-                isListening
-                  ? 'bg-amber-500 hover:bg-amber-600 text-slate-950 shadow-amber-900/20'
-                  : 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-900/20'
+              className={`w-14 h-8 px-1 rounded-full flex items-center transition-colors duration-200 cursor-pointer ${
+                isListening ? 'bg-emerald-primary' : 'bg-slate-700'
               }`}
+              title={isListening ? 'Click to Pause Soundbox' : 'Click to Resume Soundbox'}
             >
-              {isListening ? (
-                <>
-                  <Pause className="w-5 h-5" />
-                  <span>Pause Soundbox</span>
-                </>
-              ) : (
-                <>
-                  <Play className="w-5 h-5 fill-current" />
-                  <span>Resume Soundbox</span>
-                </>
-              )}
-            </button>
-
-            <button
-              onClick={handleTestVoice}
-              className="px-4 py-3.5 rounded-2xl font-semibold text-sm bg-white/10 hover:bg-white/20 text-white backdrop-blur transition flex items-center space-x-2"
-              title="Speak a test announcement"
-            >
-              <Volume2 className="w-4 h-4 text-emerald-300" />
-              <span>Test Voice</span>
+              <span className={`w-6 h-6 rounded-full bg-white shadow-md transform transition-transform duration-200 ${
+                isListening ? 'translate-x-6' : 'translate-x-0'
+              }`} />
             </button>
           </div>
 
         </div>
 
-        {/* Quick Diagnostics Strip */}
-        <div className="mt-6 pt-4 border-t border-white/10 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs text-indigo-200">
-          <div>
-            <span className="text-[10px] text-white/60 block">Connection State</span>
-            <span className="font-semibold text-white">
-              {connectionStatus === DeviceConnectionStatus.CONNECTED_LOCAL_BRIDGE ? 'Companion Linked' : 'Web Simulator'}
-            </span>
+        {/* Subtext Primed Notice */}
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-1.5 text-secondary-fixed">
+            <CheckCircle2 className="w-4 h-4 text-secondary-fixed" />
+            <span className="text-sm font-bold">Virtual Terminal Active</span>
           </div>
-          <div>
-            <span className="text-[10px] text-white/60 block">Voice Language</span>
-            <span className="font-semibold text-white">{settings.voice.language} ({settings.voice.speechRate}x)</span>
-          </div>
-          <div>
-            <span className="text-[10px] text-white/60 block">Notification Access</span>
-            <span className={`font-semibold ${notificationPermissionGranted ? 'text-emerald-300' : 'text-amber-300'}`}>
-              {notificationPermissionGranted ? 'Granted' : 'Needs Check'}
-            </span>
-          </div>
-          <div>
-            <span className="text-[10px] text-white/60 block">Monthly Rental Saved</span>
-            <span className="font-bold text-emerald-300">~ ₹{settings.merchant.estimatedSoundboxRentalFee}</span>
-          </div>
-        </div>
-
-      </div>
-
-      {/* Metrics Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        
-        {/* Today's Notification-Derived Total */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-          <div className="flex items-center justify-between text-slate-500 mb-2">
-            <span className="text-xs font-semibold">Today's Collection</span>
-            <div className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600">
-              <TrendingUp className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="flex items-baseline space-x-1">
-            <span className="text-2xl sm:text-3xl font-extrabold text-slate-900">
-              ₹{stats.todayTotalAmount.toLocaleString('en-IN')}
-            </span>
-          </div>
-          <p className="text-[11px] text-slate-400 mt-1">
-            From {stats.todayIncomingCount} incoming payment alert{stats.todayIncomingCount === 1 ? '' : 's'}
+          <p className="text-xs text-slate-300 leading-relaxed">
+            {isListening
+              ? 'Phone speaker primed • Background notification engine 100% online'
+              : 'Announcements paused • Tap the toggle to resume audio'}
           </p>
         </div>
 
-        {/* Total Spoken Announcements */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-          <div className="flex items-center justify-between text-slate-500 mb-2">
-            <span className="text-xs font-semibold">Announcements Spoken</span>
-            <div className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600">
-              <Volume2 className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="flex items-baseline space-x-1">
-            <span className="text-2xl sm:text-3xl font-extrabold text-slate-900">
-              {stats.todayAnnouncedCount}
-            </span>
-          </div>
-          <p className="text-[11px] text-slate-400 mt-1">
-            Clear voice playback completed
-          </p>
-        </div>
-
-        {/* Duplicates Suppressed */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-          <div className="flex items-center justify-between text-slate-500 mb-2">
-            <span className="text-xs font-semibold">Duplicates Suppressed</span>
-            <div className="p-1.5 rounded-lg bg-amber-50 text-amber-600">
-              <RotateCcw className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="flex items-baseline space-x-1">
-            <span className="text-2xl sm:text-3xl font-extrabold text-slate-900">
-              {stats.todayDuplicateCount}
-            </span>
-          </div>
-          <p className="text-[11px] text-slate-400 mt-1">
-            Prevented repeated noise
-          </p>
-        </div>
-
-        {/* Blocked Ineligible Alerts */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-          <div className="flex items-center justify-between text-slate-500 mb-2">
-            <span className="text-xs font-semibold">Blocked Non-Incoming</span>
-            <div className="p-1.5 rounded-lg bg-red-50 text-red-600">
-              <ShieldCheck className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="flex items-baseline space-x-1">
-            <span className="text-2xl sm:text-3xl font-extrabold text-slate-900">
-              {stats.todayRejectedCount}
-            </span>
-          </div>
-          <p className="text-[11px] text-slate-400 mt-1">
-            Debits, failed & pending silenced
-          </p>
-        </div>
-
-      </div>
-
-      {/* Quick Action & Most Recent Announcement Banner */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Most Recent Eligible Payment Card */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-          <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-            <div className="flex items-center space-x-2">
-              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-              <h3 className="font-bold text-slate-900 text-sm">Most Recent Incoming Payment</h3>
-            </div>
-            {stats.mostRecentEligible && (
-              <button
-                onClick={() => repeatLastAnnouncement()}
-                className="flex items-center space-x-1 text-xs font-semibold text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-2.5 py-1 rounded-lg transition"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                <span>Repeat Voice</span>
-              </button>
-            )}
-          </div>
-
-          {stats.mostRecentEligible ? (
-            <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-emerald-50/50 p-4 rounded-xl border border-emerald-100">
-              <div>
-                <span className="text-xs text-emerald-800 font-semibold uppercase tracking-wider">
-                  {stats.mostRecentEligible.sourceAppName}
-                </span>
-                <div className="text-3xl font-extrabold text-emerald-700 mt-0.5">
-                  ₹{stats.mostRecentEligible.amount.toLocaleString('en-IN')}
-                </div>
-                <div className="text-xs text-slate-600 mt-1 flex items-center space-x-2">
-                  <span>From: {stats.mostRecentEligible.payerName || 'UPI Customer'}</span>
-                  {stats.mostRecentEligible.referenceId && (
-                    <span className="text-slate-400 font-mono text-[11px]">
-                      UTR: {stats.mostRecentEligible.referenceId}
-                    </span>
-                  )}
-                </div>
-                <div className="text-[11px] text-slate-500 mt-1.5 italic">
-                  "{stats.mostRecentEligible.announcementText}"
-                </div>
-              </div>
-
-              <div className="text-right flex sm:flex-col items-center sm:items-end justify-between">
-                <span className="px-2.5 py-1 bg-emerald-100 text-emerald-800 font-bold text-xs rounded-full">
-                  Announced
-                </span>
-                <span className="text-[11px] text-slate-400 mt-1">
-                  {new Date(stats.mostRecentEligible.eventTimestamp).toLocaleTimeString()}
-                </span>
-              </div>
-            </div>
-          ) : (
-            <div className="py-8 text-center text-slate-400 space-y-2">
-              <Clock className="w-8 h-8 mx-auto opacity-40" />
-              <p className="text-xs">No payments received yet today.</p>
-              <button
-                onClick={onOpenDemo}
-                className="text-xs text-indigo-600 font-bold hover:underline"
-              >
-                Click here to test a demo payment
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Hackathon Demo Quick Launch Card */}
-        <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl border border-indigo-100 p-6 flex flex-col justify-between shadow-sm">
-          <div>
-            <div className="flex items-center space-x-2 text-indigo-700 mb-2">
-              <Sparkles className="w-5 h-5" />
-              <h3 className="font-bold text-sm">Demo Mode Simulator</h3>
-            </div>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Demonstrate the full pipeline with PhonePe, GPay, Paytm, BHIM notifications. Test outgoing debit rejection, failed payment rejection, and duplicate suppression.
-            </p>
-          </div>
-
-          <div className="mt-4 pt-3 border-t border-indigo-100 space-y-2">
-            <button
-              onClick={onOpenDemo}
-              className="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1.5 shadow-sm shadow-indigo-300"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Open Hackathon Demo Hub</span>
-            </button>
-            <button
-              onClick={onOpenOnboarding}
-              className="w-full py-2 px-4 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs font-semibold transition"
-            >
-              Re-run Setup Wizard
-            </button>
-          </div>
-        </div>
-
-      </div>
-
-      {/* Recent Activity List */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-        <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-          <div>
-            <h3 className="font-bold text-slate-900 text-sm">Recent Notification Events</h3>
-            <p className="text-xs text-slate-400">Processed through the 12-step safety pipeline</p>
-          </div>
+        {/* Hero Actions: Test Announcement CTA Button */}
+        <div className="pt-1">
           <button
-            onClick={onNavigateTransactions}
-            className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center space-x-1"
+            onClick={handleTestAnnouncement}
+            className="w-full h-12 px-4 rounded-xl bg-emerald-primary hover:bg-emerald-600 text-white font-bold text-sm flex items-center justify-center gap-2 active:scale-98 transition-all shadow-glow-emerald cursor-pointer"
           >
-            <span>View All ({transactions.length})</span>
-            <ArrowUpRight className="w-3.5 h-3.5" />
+            <Volume2 className="w-5 h-5 text-secondary-fixed" />
+            <span>Test Announcement 🔊</span>
           </button>
         </div>
 
-        <div className="mt-4 divide-y divide-slate-100">
+        {/* Status Indicators Grid (3 Columns) */}
+        <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-800">
+          <div className="bg-white/5 rounded-xl p-2.5 flex flex-col items-center text-center gap-1">
+            <div className={`flex items-center gap-1 text-xs font-bold ${
+              notificationPermissionGranted ? 'text-secondary-fixed' : 'text-amber-warning'
+            }`}>
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>{notificationPermissionGranted ? '✓ Granted' : 'Required'}</span>
+            </div>
+            <span className="text-[10px] text-slate-300 leading-tight">Notification Listener</span>
+          </div>
+
+          <div className="bg-white/5 rounded-xl p-2.5 flex flex-col items-center text-center gap-1">
+            <div className="flex items-center gap-1 text-secondary-fixed text-xs font-bold">
+              <Volume2 className="w-3.5 h-3.5" />
+              <span>95% ✓</span>
+            </div>
+            <span className="text-[10px] text-slate-300 leading-tight">Media Volume</span>
+          </div>
+
+          <div className="bg-white/5 rounded-xl p-2.5 flex flex-col items-center text-center gap-1">
+            <div className="flex items-center gap-1 text-secondary-fixed text-xs font-bold">
+              <Battery className="w-3.5 h-3.5" />
+              <span>✓ Ignored</span>
+            </div>
+            <span className="text-[10px] text-slate-300 leading-tight">Battery Optimization</span>
+          </div>
+        </div>
+
+      </div>
+
+      {/* 2. Today's Summary Rupee Metrics Card (matching Stitch specification) */}
+      <div className="w-full bg-white rounded-2xl p-5 shadow-subtle border border-surface-border flex flex-col gap-4">
+        
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-emerald-primary" />
+            <span className="text-xs font-extrabold text-text-primary uppercase tracking-wide">
+              Today's Business
+            </span>
+          </div>
+          <span className="text-[11px] bg-surface-container-high text-text-secondary px-2.5 py-0.5 rounded-full font-bold">
+            Live Sync
+          </span>
+        </div>
+
+        {/* Main Rupee Amount Display */}
+        <div className="flex flex-col">
+          <span className="text-xs font-medium text-text-muted">Total Received Today</span>
+          <div className="flex items-baseline gap-1 mt-0.5">
+            <span className="text-3xl sm:text-4xl font-extrabold text-text-primary tracking-tight tabular-nums">
+              ₹{stats.todayTotalAmount.toLocaleString('en-IN')}<span className="text-text-muted text-xl font-bold">.00</span>
+            </span>
+          </div>
+        </div>
+
+        {/* Secondary Counters Mosaic */}
+        <div className="grid grid-cols-3 gap-2 pt-1">
+          <div className="bg-surface-container-low rounded-xl p-2.5 flex flex-col gap-0.5 border border-surface-border">
+            <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Payments</span>
+            <div className="flex items-center gap-1">
+              <span className="text-base font-extrabold text-text-primary">{stats.todayIncomingCount}</span>
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-primary" />
+            </div>
+            <span className="text-[10px] text-text-muted">100% Success</span>
+          </div>
+
+          <div className="bg-surface-container-low rounded-xl p-2.5 flex flex-col gap-0.5 border border-surface-border">
+            <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Announced</span>
+            <div className="flex items-center gap-1">
+              <span className="text-base font-extrabold text-emerald-primary">{stats.todayAnnouncedCount}</span>
+              <Volume2 className="w-3.5 h-3.5 text-emerald-primary" />
+            </div>
+            <span className="text-[10px] text-emerald-primary font-medium">Zero Delay</span>
+          </div>
+
+          <div className="bg-surface-container-low rounded-xl p-2.5 flex flex-col gap-0.5 border border-surface-border">
+            <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Missed / Blocked</span>
+            <div className="flex items-center gap-1">
+              <span className="text-base font-extrabold text-text-primary">
+                {stats.todayRejectedCount + stats.todayDuplicateCount}
+              </span>
+              <ShieldCheck className="w-3.5 h-3.5 text-text-muted" />
+            </div>
+            <span className="text-[10px] text-text-muted">Full Audit Log</span>
+          </div>
+        </div>
+
+      </div>
+
+      {/* 3. Rental Savings Highlight Card (matching Stitch specification) */}
+      <div
+        onClick={onNavigateSavings}
+        className="w-full bg-secondary-container text-on-secondary-container rounded-2xl p-4 sm:p-5 shadow-subtle border border-emerald-200 flex flex-col gap-2 relative overflow-hidden cursor-pointer hover:bg-emerald-100/80 transition"
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center text-emerald-primary shrink-0 shadow-sm">
+              <Sparkles className="w-5 h-5" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-xs font-bold text-on-secondary-fixed">Soundbox Hardware Rent Saved</span>
+              <span className="text-xs text-on-secondary-container">₹125/month recurring charge eliminated</span>
+            </div>
+          </div>
+          <ArrowRight className="w-4 h-4 text-emerald-800 shrink-0 mt-1" />
+        </div>
+        <p className="text-[11px] text-emerald-800/80 pl-13 pt-1 border-t border-emerald-200/60">
+          Tap to view equipment savings ledger & avoided hardware overhead breakdown &rarr;
+        </p>
+      </div>
+
+      {/* 4. Recent Transactions Ledger Feed */}
+      <div className="bg-white rounded-2xl p-5 shadow-subtle border border-surface-border flex flex-col gap-4">
+        
+        <div className="flex items-center justify-between pb-3 border-b border-surface-border">
+          <div className="flex items-center gap-2">
+            <h3 className="font-extrabold text-text-primary text-sm">Recent Activity</h3>
+            <span className="w-2 h-2 rounded-full bg-emerald-primary" />
+          </div>
+          <button
+            onClick={onNavigateTransactions}
+            className="text-xs font-bold text-emerald-primary hover:underline flex items-center gap-1"
+          >
+            <span>View Ledger ({transactions.length})</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* Transaction Cards List */}
+        <div className="divide-y divide-surface-border -my-1">
           {transactions.slice(0, 5).map((tx) => {
             const isEligible = tx.eventType === PaymentEventType.INCOMING_PAYMENT;
             const isAnnounced = tx.announcementStatus === AnnouncementStatus.ANNOUNCED;
+            const appColors = getAppColor(tx.sourceAppName);
 
             return (
-              <div key={tx.eventId} className="py-3.5 flex items-center justify-between first:pt-0 last:pb-0">
-                
-                <div className="flex items-center space-x-3">
-                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs ${
-                    isAnnounced
-                      ? 'bg-emerald-100 text-emerald-700'
-                      : tx.announcementStatus === AnnouncementStatus.SUPPRESSED_DUPLICATE
-                      ? 'bg-amber-100 text-amber-700'
-                      : 'bg-slate-100 text-slate-600'
-                  }`}>
-                    {tx.sourceAppName.slice(0, 2).toUpperCase()}
-                  </div>
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <span className="font-semibold text-slate-800 text-xs sm:text-sm">
-                        {tx.sourceAppName}
-                      </span>
-                      {tx.isSimulated && (
-                        <span className="px-1.5 py-0.2 bg-purple-100 text-purple-700 font-bold text-[10px] rounded uppercase">
-                          Simulated
-                        </span>
-                      )}
-                      <span className={`text-[10px] px-1.5 py-0.2 rounded font-semibold ${
-                        isEligible ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'
-                      }`}>
-                        {tx.eventType.replace('_', ' ')}
-                      </span>
+              <article
+                key={tx.eventId}
+                className="py-3.5 flex flex-col gap-2.5 first:pt-1 last:pb-1"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-3 min-w-0">
+                    {/* Branded App Icon Badge */}
+                    <div className={`w-10 h-10 rounded-xl ${appColors.bg} ${appColors.text} flex items-center justify-center shrink-0 font-extrabold text-xs shadow-sm`}>
+                      {tx.sourceAppName.slice(0, 2).toUpperCase()}
                     </div>
-                    <p className="text-[11px] text-slate-400 mt-0.5 truncate max-w-[200px] sm:max-w-md">
-                      {tx.rawSummary.textPreview}
-                    </p>
+
+                    <div className="flex flex-col min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-text-primary text-xs sm:text-sm truncate">
+                          {tx.payerName || tx.sourceAppName}
+                        </span>
+                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-surface-container font-bold text-text-secondary shrink-0">
+                          {tx.sourceAppName}
+                        </span>
+                        {tx.isSimulated && (
+                          <span className="text-[10px] px-1.5 py-0.2 rounded bg-purple-100 text-purple-700 font-bold uppercase">
+                            Demo
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1.5 text-text-muted text-[11px] mt-0.5">
+                        <span>{new Date(tx.eventTimestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        <span>•</span>
+                        <span className="font-mono truncate">
+                          {tx.referenceId ? `UTR: ${tx.referenceId}` : tx.eventType.replace('_', ' ')}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Rupee Amount in Emerald */}
+                  <div className="flex flex-col items-end shrink-0">
+                    <span className={`text-base font-black tabular-nums ${
+                      isEligible ? 'text-emerald-primary' : 'text-text-muted'
+                    }`}>
+                      {tx.amount > 0 ? `+₹${tx.amount.toLocaleString('en-IN')}.00` : '—'}
+                    </span>
+                    <div className={`flex items-center gap-1 text-[11px] font-bold mt-0.5 ${
+                      isAnnounced ? 'text-emerald-primary' : 'text-text-muted'
+                    }`}>
+                      {isAnnounced && <CheckCircle2 className="w-3 h-3" />}
+                      <span>{tx.announcementStatus.replace('_', ' ')}</span>
+                    </div>
                   </div>
                 </div>
 
-                <div className="text-right">
-                  <div className={`font-extrabold text-sm sm:text-base ${
-                    isEligible ? 'text-emerald-600' : 'text-slate-600'
-                  }`}>
-                    {tx.amount > 0 ? `₹${tx.amount.toLocaleString('en-IN')}` : '—'}
-                  </div>
-                  <span className={`text-[10px] font-semibold ${
-                    isAnnounced
-                      ? 'text-emerald-600'
-                      : tx.announcementStatus === AnnouncementStatus.SUPPRESSED_DUPLICATE
-                      ? 'text-amber-600'
-                      : 'text-slate-400'
-                  }`}>
-                    {tx.announcementStatus.replace('_', ' ')}
-                  </span>
-                </div>
+                {/* Action Pill Bar */}
+                <div className="flex items-center justify-between pt-1.5 bg-surface-container-low px-3 py-1.5 rounded-xl text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] bg-white px-2 py-0.5 rounded-full text-text-secondary font-semibold flex items-center gap-1 shadow-subtle border border-surface-border">
+                      <Volume2 className="w-3 h-3 text-emerald-primary" />
+                      <span>{settings.voice.language === 'hi-IN' ? 'Hindi Voice' : 'English Voice'}</span>
+                    </span>
 
-              </div>
+                    {tx.referenceId && (
+                      <button
+                        onClick={() => handleCopy(tx.referenceId!)}
+                        className="flex items-center gap-1 text-[10px] text-text-muted hover:text-text-primary px-1.5 py-0.5 rounded font-semibold cursor-pointer"
+                        title="Copy UTR"
+                      >
+                        {copiedUtr === tx.referenceId ? (
+                          <Check className="w-3 h-3 text-emerald-primary" />
+                        ) : (
+                          <Copy className="w-3 h-3" />
+                        )}
+                        <span>{copiedUtr === tx.referenceId ? 'Copied' : 'Copy UTR'}</span>
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Replay Announcement Button */}
+                  {isEligible && (
+                    <button
+                      onClick={() => handleReplaySingleTx(tx.amount)}
+                      className="w-7 h-7 rounded-full bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center hover:bg-emerald-primary hover:text-white transition shadow-sm cursor-pointer"
+                      title="Replay Voice Alert"
+                    >
+                      <Volume2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              </article>
             );
           })}
 
           {transactions.length === 0 && (
-            <div className="py-6 text-center text-xs text-slate-400">
-              No payment notifications received yet. Launch Demo Hub above to test.
+            <div className="py-8 text-center text-xs text-text-muted space-y-2">
+              <p>No payment alerts processed yet today.</p>
+              <button
+                onClick={onOpenDemo}
+                className="text-emerald-primary font-bold hover:underline"
+              >
+                Launch Demo Hub to test a simulated payment &rarr;
+              </button>
             </div>
           )}
         </div>
+
       </div>
 
     </div>

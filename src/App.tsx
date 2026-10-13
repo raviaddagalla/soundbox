@@ -6,6 +6,7 @@ import { DashboardView } from './features/dashboard/DashboardView';
 import { TransactionListView } from './features/transactions/TransactionListView';
 import { SettingsView } from './features/settings/SettingsView';
 import { DiagnosticsView } from './features/diagnostics/DiagnosticsView';
+import { SavingsView } from './features/savings/SavingsView';
 import { OnboardingModal } from './features/onboarding/OnboardingModal';
 import { DemoControlModal } from './features/demo/DemoControlModal';
 import { useSettingsStore } from './stores/useSettingsStore';
@@ -43,11 +44,14 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] flex flex-col font-sans pb-16 md:pb-8">
-      {/* 1. Trust & Safety Banner */}
-      <TrustBanner />
+    <div className="min-h-screen bg-surface-background text-text-primary flex flex-col font-sans pb-20 md:pb-10">
+      
+      {/* 1. Trust & Compliance Banner */}
+      <div className="pt-16">
+        <TrustBanner />
+      </div>
 
-      {/* 2. Soundbox Navbar */}
+      {/* 2. Top App Bar */}
       <Navbar
         onOpenDemo={() => setShowDemoModal(true)}
         onOpenOnboarding={() => setShowOnboarding(true)}
@@ -56,25 +60,28 @@ export const App: React.FC = () => {
       {/* 3. Desktop Navigation Tabs */}
       <DesktopNavTabs activeTab={activeTab} onChangeTab={handleTabChange} />
 
-      {/* 4. Main Body Views */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      {/* 4. Canonical View Body (Mobile-friendly max width matching handheld specification) */}
+      <main className="flex-1 w-full max-w-xl mx-auto px-4 py-4 sm:py-6">
         {activeTab === 'dashboard' && (
           <DashboardView
             onOpenDemo={() => setShowDemoModal(true)}
             onOpenOnboarding={() => setShowOnboarding(true)}
             onNavigateTransactions={() => setActiveTab('transactions')}
             onNavigateDiagnostics={() => setActiveTab('diagnostics')}
+            onNavigateSavings={() => setActiveTab('savings')}
           />
         )}
 
         {activeTab === 'transactions' && <TransactionListView />}
 
+        {activeTab === 'settings' && <SettingsView />}
+
         {activeTab === 'diagnostics' && <DiagnosticsView />}
 
-        {activeTab === 'settings' && <SettingsView />}
+        {activeTab === 'savings' && <SavingsView />}
       </main>
 
-      {/* 5. Mobile Bottom Navigation */}
+      {/* 5. Mobile Shell Bottom Navigation */}
       <MobileBottomNav activeTab={activeTab} onChangeTab={handleTabChange} />
 
       {/* 6. Merchant Setup Wizard */}
@@ -88,6 +95,7 @@ export const App: React.FC = () => {
         isOpen={showDemoModal}
         onClose={() => setShowDemoModal(false)}
       />
+
     </div>
   );
 };
