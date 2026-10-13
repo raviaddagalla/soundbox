@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primary_indigo">#4338CA</color>
+    <color name="primary_indigo_dark">#312E81</color>
+    <color name="teal_confirm">#00897B</color>
+    <color name="emerald_green">#10B981</color>
+    <color name="amber_warning">#F59E0B</color>
+    <color name="red_error">#EF4444</color>
+    <color name="surface_background">#F8FAFC</color>
+    <color name="charcoal_text">#0F172A</color>
+    <color name="white">#FFFFFF</color>
+</resources>

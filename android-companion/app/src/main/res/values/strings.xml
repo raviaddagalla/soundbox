@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Soundless UPI</string>
+    <string name="service_running">Soundless Soundbox service active</string>
+    <string name="grant_permission">Grant Notification Access</string>
+    <string name="permission_granted">Notification Access Granted</string>
+    <string name="permission_required">Notification Access Required</string>
+    <string name="permission_desc">Enable notification access for Soundless UPI in Android Settings so it can hear incoming payments from PhonePe, GPay, Paytm, and BHIM.</string>
+</resources>
